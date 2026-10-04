@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import path from 'node:path';
 const sample=path.resolve('public/sample-policy.pdf');
 test('PDF upload, question, source, persistence and family isolation',async({page})=>{
- const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));const outgoing:string[]=[];page.on('request',r=>{if(r.method()==='POST')outgoing.push(r.url());});
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));const outgoing:string[]=[];page.on('request',r=>{if(r.method()==='POST'&&!new URL(r.url()).pathname.startsWith('/cdn-cgi/challenge-platform/'))outgoing.push(r.url());});
  await page.goto('/');await expect(page.getByRole('heading',{name:'나의 보험 이야기'})).toBeVisible();
  await page.locator('#pdf-input').setInputFiles(sample);
  await expect(page.getByRole('alert')).toContainText('약관 1개를 저장');
