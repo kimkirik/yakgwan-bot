@@ -1,0 +1,14 @@
+import {createHash} from 'node:crypto';
+import {cp,mkdir,writeFile} from 'node:fs/promises';
+import {prebuiltAppConfig} from '@mlc-ai/web-llm';
+for(const name of ['cmaps','standard_fonts','wasm'])await cp(`node_modules/pdfjs-dist/${name}`,`public/vendor/${name}`,{recursive:true});
+await mkdir('public/vendor/tesseract/core',{recursive:true});
+await cp('node_modules/tesseract.js/dist/worker.min.js','public/vendor/tesseract/worker.min.js');
+await cp('node_modules/tesseract.js-core','public/vendor/tesseract/core',{recursive:true,filter:p=>!p.includes('node_modules/tesseract.js-core/node_modules')});
+const model=prebuiltAppConfig.model_list.find(m=>m.model_id==='Qwen3-0.6B-q4f16_1-MLC');
+const r=await fetch(model.model_lib);if(!r.ok)throw new Error(`Model library: ${r.status}`);
+await mkdir('public/models',{recursive:true});
+const bytes=Buffer.from(await r.arrayBuffer());
+if(createHash('sha256').update(bytes).digest('hex')!=='4db800b24119204e1a0386e8a12e084d5012aa60f77c5bffad362f20498df912')throw new Error('Model library integrity mismatch');
+await writeFile('public/models/qwen3-06b.wasm',bytes);
+console.log('PDF, OCR and AI runtime assets are bundled locally.');
